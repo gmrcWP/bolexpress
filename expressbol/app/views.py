@@ -1,7 +1,8 @@
-from flask import jsonify, render_template
+from flask import jsonify, render_template, request
 from flask_appbuilder import BaseView, ModelView, expose
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from sqlalchemy import func
+from sqlalchemy import extract
 
 from .extensions import appbuilder, db
 
@@ -259,9 +260,105 @@ class ReportesView(BaseView):
         return jsonify({"labels": labels, "values": values, "detalles": detalles})
 
 
+class GraficosView(BaseView):
+    route_base = "/graficos"
+    default_view = "index"
+
+    @expose('/')
+    def index(self):
+        return self.render_template("graficos/index.html")
+
+    @expose('/heatmap_rutas')
+    def heatmap_rutas(self):
+        from_date = request.args.get('from_date', None)
+        to_date = request.args.get('to_date', None)
+        estado = request.args.get('estado', None)
+
+        query = db.session.query(Envio)
+        if from_date:
+            query = query.filter(Envio.fecha_registro >= from_date)
+        if to_date:
+            query = query.filter(Envio.fecha_registro <= to_date)
+        if estado and estado != 'todos':
+            query = query.filter(Envio.estado == estado)
+
+        envios = query.all()
+
+        dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
+        rutas_set = set()
+        for e in envios:
+            rutas_set.add(f"{e.origen} -> {e.destino}")
+        rutas = sorted(list(rutas_set))
+
+        heatmap_data = []
+        for dia_idx, dia in enumerate(dias):
+            row = []
+            for ruta in rutas:
+                count = sum(1 for e in envios if 
+                    f"{e.origen} -> {e.destino}" == ruta and 
+                    e.fecha_registro and e.fecha_registro.weekday() == dia_idx)
+                row.append(count)
+            heatmap_data.append(row)
+
+        return jsonify({"dias": dias, "rutas": rutas, "data": heatmap_data})
+
+    @expose('/estado_mes')
+    def estado_mes(self):
+        year = request.args.get('year', None)
+
+        query = db.session.query(Envio)
+        if year:
+            query = query.filter(extract('year', Envio.fecha_registro) == int(year))
+
+        envios = query.all()
+
+        meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        estados = ['Registrado', 'En transito', 'Entregado', 'Cancelado']
+
+        mes_data = {m: {e: 0 for e in estados} for m in meses}
+        for e in envios:
+            if e.fecha_registro and e.estado:
+                mes_idx = e.fecha_registro.month - 1
+                mes_name = meses[mes_idx]
+                est = e.estado if e.estado in estados else 'Registrado'
+                mes_data[mes_name][est] = mes_data.get(mes_name, {}).get(est, 0) + 1
+
+        return jsonify({
+            "meses": meses,
+            "estados": estados,
+            "data": mes_data,
+            "labels": meses,
+            "datasets": [
+                {"label": "Registrado", "data": [mes_data[m].get("Registrado", 0) for m in meses], "backgroundColor": "#3366cc"},
+                {"label": "En transito", "data": [mes_data[m].get("En transito", 0) for m in meses], "backgroundColor": "#ff9900"},
+                {"label": "Entregado", "data": [mes_data[m].get("Entregado", 0) for m in meses], "backgroundColor": "#109618"},
+                {"label": "Cancelado", "data": [mes_data[m].get("Cancelado", 0) for m in meses], "backgroundColor": "#dc3912"}
+            ]
+        })
+
+    @expose('/estados')
+    def estados(self):
+        estados = db.session.query(Envio.estado).distinct().all()
+        return jsonify([e[0] for e in estados])
+
+    @expose('/years')
+    def years(self):
+        results = db.session.query(
+            extract('year', Envio.fecha_registro).label('year')
+        ).distinct().order_by(extract('year', Envio.fecha_registro).desc()).all()
+        return jsonify([int(y[0]) for y in results if y[0]])
+
+
 appbuilder.add_view(
     ReportesView,
     "Reportes",
     icon="fa-chart-bar",
+    category="Gestion"
+)
+
+appbuilder.add_view(
+    GraficosView,
+    "Graficos",
+    icon="fa-chart-line",
     category="Gestion"
 )
