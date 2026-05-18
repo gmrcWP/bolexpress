@@ -3,6 +3,8 @@ from flask_appbuilder import BaseView, ModelView, expose
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from sqlalchemy import func
 from sqlalchemy import extract
+from wtforms import SelectField
+from flask_appbuilder.fieldwidgets import Select2Widget
 
 from .extensions import appbuilder, db
 
@@ -56,6 +58,34 @@ class VehiculoView(ModelView):
         "tipo",
         "capacidad_kg"
     ]
+
+    add_form_extra_fields = {
+    "tipo": SelectField(
+            "Tipo",
+            choices=[
+                ("Camión", "Camión"),
+                ("Camioneta", "Camioneta"),
+                ("Furgón", "Furgón"),
+                ("Semi Trailer", "Semi Trailer"),
+                ("Trailer", "Trailer")
+            ],
+            widget=Select2Widget()
+        )
+    }
+
+    edit_form_extra_fields = {
+        "tipo": SelectField(
+            "Tipo",
+            choices=[
+                ("Camión", "Camión"),
+                ("Camioneta", "Camioneta"),
+                ("Furgón", "Furgón"),
+                ("Semi Trailer", "Semi Trailer"),
+                ("Trailer", "Trailer")
+            ],
+            widget=Select2Widget()
+        )
+    }
 
 
 class RutaViajeView(ModelView):
@@ -125,6 +155,32 @@ class EnvioView(ModelView):
         "cliente",
         "viaje"
     ]
+
+    add_form_extra_fields = {
+        "estado": SelectField(
+            "Estado",
+            choices=[
+                ("Registrado", "Registrado"),
+                ("En tránsito", "En tránsito"),
+                ("Entregado", "Entregado"),
+                ("Cancelado", "Cancelado")
+            ],
+            widget=Select2Widget()
+        )
+    }
+
+    edit_form_extra_fields = {
+        "estado": SelectField(
+            "Estado",
+            choices=[
+                ("Registrado", "Registrado"),
+                ("En tránsito", "En tránsito"),
+                ("Entregado", "Entregado"),
+                ("Cancelado", "Cancelado")
+            ],
+            widget=Select2Widget()
+        )
+    }
 
 
 appbuilder.add_view(
