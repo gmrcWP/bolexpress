@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlalchemy import extract
 from wtforms import SelectField
 from flask_appbuilder.fieldwidgets import Select2Widget
+from wtforms.validators import ValidationError
 
 from .extensions import appbuilder, db
 
@@ -156,6 +157,19 @@ class EnvioView(ModelView):
         "viaje"
     ]
 
+    CIUDADES = [
+        ("La Paz", "La Paz"),
+        ("Santa Cruz", "Santa Cruz"),
+        ("Cochabamba", "Cochabamba"),
+        ("Sucre", "Sucre"),
+        ("Tarija", "Tarija"),
+        ("Potosí", "Potosí"),
+        ("Oruro", "Oruro"),
+        ("Beni", "Beni"),
+        ("Pando", "Pando"),
+        ("Chuquisaca", "Chuquisaca")
+    ]
+
     add_form_extra_fields = {
         "estado": SelectField(
             "Estado",
@@ -165,6 +179,17 @@ class EnvioView(ModelView):
                 ("Entregado", "Entregado"),
                 ("Cancelado", "Cancelado")
             ],
+            widget=Select2Widget()
+        ),
+        "origen": SelectField(
+            "Origen",
+            choices=CIUDADES,
+            widget=Select2Widget()
+        ),
+
+        "destino": SelectField(
+            "Destino",
+            choices=CIUDADES,
             widget=Select2Widget()
         )
     }
@@ -179,8 +204,27 @@ class EnvioView(ModelView):
                 ("Cancelado", "Cancelado")
             ],
             widget=Select2Widget()
+        ),
+        "origen": SelectField(
+            "Origen",
+            choices=CIUDADES,
+            widget=Select2Widget()
+        ),
+
+        "destino": SelectField(
+            "Destino",
+            choices=CIUDADES,
+            widget=Select2Widget()
         )
     }
+
+    def pre_add(self, item):
+        if item.origen == item.destino:
+            raise ValidationError("Origen y destino no pueden ser iguales")
+
+    def pre_update(self, item):
+        if item.origen == item.destino:
+            raise ValidationError("Origen y destino no pueden ser iguales")
 
 
 appbuilder.add_view(
