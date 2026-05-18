@@ -82,7 +82,7 @@ def seed():
                 destino=destino,
                 fecha_registro=fecha_registro,
                 cliente=random.choice(clientes),
-                viaje=random.choice(rutas) if random.random() > 0.2 else None
+                viaje=random.choice(rutas)
             )
             db.session.add(envio)
         db.session.commit()
