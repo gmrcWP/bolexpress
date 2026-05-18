@@ -1,0 +1,231 @@
+{% extends "appbuilder/base.html" %}
+
+{% block content %}
+
+<style>
+    .grafico-container { padding: 20px; }
+    .grafico-btn {
+        padding: 8px 16px;
+        margin-right: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        background: #f8f8f8;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    .grafico-btn.active { background: #337ab7; color: white; border-color: #337ab7; }
+    .grafico-section { display: none; padding: 20px 0; }
+    .grafico-section.active { display: block; }
+    .filtros-box {
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .filtros-box label { font-weight: bold; margin-right: 5px; }
+    .filtros-box input, .filtros-box select {
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+    .chart-box {
+        padding: 20px;
+        background: #fafafa;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    canvas { max-height: 350px; }
+    .heatmap-container {
+        overflow-x: auto;
+        padding: 10px;
+    }
+    .heatmap-table {
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    .heatmap-table th, .heatmap-table td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+    .heatmap-table th { background: #f0f0f0; font-weight: bold; }
+    .heatmap-cell {
+        min-width: 80px;
+        transition: all 0.3s;
+    }
+    .heatmap-cell:hover { transform: scale(1.1); }
+</style>
+
+<div class="grafico-container">
+    <h3>Graficos Dinamicos</h3>
+    <hr>
+    
+    <div>
+        <button class="grafico-btn active" onclick="showGrafico('heatmap')">Mapa de Calor de Rutas</button>
+        <button class="grafico-btn" onclick="showGrafico('estado_mes')">Estado de Envios por Mes</button>
+    </div>
+
+    <div id="heatmap" class="grafico-section active">
+        <div class="filtros-box">
+            <div>
+                <label>Desde:</label>
+                <input type="date" id="heatmap_from">
+            </div>
+            <div>
+                <label>Hasta:</label>
+                <input type="date" id="heatmap_to">
+            </div>
+            <div>
+                <label>Estado:</label>
+                <select id="heatmap_estado">
+                    <option value="todos">Todos</option>
+                </select>
+            </div>
+            <button onclick="loadHeatmap()" style="padding:5px 15px;background:#337ab7;color:white;border:none;border-radius:3px;cursor:pointer;">Aplicar</button>
+        </div>
+        <div class="chart-box">
+            <h5>Mapa de Calor - Frecuencia de Rutas por Dia</h5>
+            <div class="heatmap-container">
+                <table class="heatmap-table" id="heatmap_table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="heatmap_leyenda" style="margin-top:10px;font-size:12px;color:#666;"></div>
+    </div>
+
+    <div id="estado_mes" class="grafico-section">
+        <div class="filtros-box">
+            <div>
+                <label>Anio:</label>
+                <select id="estado_year" onchange="loadEstadoMes()">
+                </select>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h5>Estado de Envios por Mes</h5>
+            <canvas id="chartEstadoMes"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let heatmapChart = null;
+let estadoMesChart = null;
+
+function showGrafico(id) {
+    document.querySelectorAll('.grafico-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.grafico-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector(`button[onclick="showGrafico('${id}')"]`).classList.add('active');
+    
+    if (id === 'heatmap') loadHeatmap();
+    if (id === 'estado_mes') loadEstadoMes();
+}
+
+function initFiltros() {
+    fetch('/graficos/estados')
+        .then(r => r.json())
+        .then(estados => {
+            const sel = document.getElementById('heatmap_estado');
+            estados.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e;
+                opt.textContent = e;
+                sel.appendChild(opt);
+            });
+        });
+    
+    fetch('/graficos/years')
+        .then(r => r.json())
+        .then(years => {
+            const sel = document.getElementById('estado_year');
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                sel.appendChild(opt);
+            });
+        });
+}
+
+function getColor(value, max) {
+    const intensity = Math.min(value / max, 1);
+    if (intensity === 0) return '#f0f0f0';
+    return `rgba(51, 102, 204, ${0.2 + intensity * 0.8})`;
+}
+
+function loadHeatmap() {
+    const from = document.getElementById('heatmap_from').value;
+    const to = document.getElementById('heatmap_to').value;
+    const estado = document.getElementById('heatmap_estado').value;
+    
+    let url = '/graficos/heatmap_rutas?';
+    if (from) url += 'from_date=' + from + '&';
+    if (to) url += 'to_date=' + to + '&';
+    if (estado) url += 'estado=' + estado;
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const table = document.getElementById('heatmap_table');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            
+            thead.innerHTML = '<tr><th>Dia</th>' + data.rutas.map(r => '<th>' + r + '</th>').join('') + '</tr>';
+            
+            const maxVal = Math.max(...data.data.flat());
+            tbody.innerHTML = '';
+            
+            data.dias.forEach((dia, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td><strong>' + dia + '</strong></td>' + 
+                    data.data[i].map(v => `<td class="heatmap-cell" style="background:${getColor(v, maxVal)}" title="${v}">${v}</td>`).join('');
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('heatmap_leyenda').innerHTML = `Total rutas: ${data.rutas.length} | Max envios: ${maxVal}`;
+        });
+}
+
+function loadEstadoMes() {
+    const year = document.getElementById('estado_year').value;
+    
+    fetch('/graficos/estado_mes?year=' + year)
+        .then(r => r.json())
+        .then(data => {
+            const ctx = document.getElementById('chartEstadoMes').getContext('2d');
+            if (estadoMesChart) estadoMesChart.destroy();
+            
+            estadoMesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: data.datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        });
+}
+
+window.addEventListener('load', () => {
+    initFiltros();
+    loadHeatmap();
+});
+</script>
+{% endblock %}

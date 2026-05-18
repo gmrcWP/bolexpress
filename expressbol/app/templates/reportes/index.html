@@ -1,0 +1,142 @@
+{% extends "appbuilder/base.html" %}
+
+{% block content %}
+
+<style>
+    .report-container { padding: 20px; }
+    .report-btn {
+        padding: 8px 16px;
+        margin-right: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        background: #f8f8f8;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    .report-btn.active { background: #337ab7; color: white; border-color: #337ab7; }
+    .report-section { display: none; padding: 20px 0; }
+    .report-section.active { display: block; }
+    .chart-box, .table-box { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 4px; }
+    .table-scroll { max-height: 250px; overflow-y: auto; }
+    canvas { max-height: 250px; }
+</style>
+
+<div class="report-container">
+    <h3>Reportes</h3>
+    <hr>
+    
+    <div>
+        <button class="report-btn active" onclick="showReport('estado')">Envios por Estado</button>
+        <button class="report-btn" onclick="showReport('ingresos')">Ingresos por Periodo</button>
+        <button class="report-btn" onclick="showReport('cliente')">Envios por Cliente</button>
+        <button class="report-btn" onclick="showReport('ruta')">Envios por Ruta</button>
+        <button class="report-btn" onclick="showReport('vehiculo')">Utilizacion de Vehiculos</button>
+    </div>
+
+    <div id="estado" class="report-section active">
+        <div style="display:flex; gap:20px;">
+            <div style="flex:1;">
+                <div class="chart-box"><h5>Grafico</h5><canvas id="chartEstado"></canvas></div>
+            </div>
+            <div style="flex:1;">
+                <div class="table-box">
+                    <h5>Resumen <span class="badge bg-primary" id="totalEstado"></span></h5>
+                    <table class="table table-striped table-sm" id="tableEstado"><thead><tr><th>Estado</th><th>Cantidad</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ingresos" class="report-section">
+        <div class="chart-box"><h5>Grafico</h5><canvas id="chartIngresos"></canvas></div>
+        <div class="table-box">
+            <h5>Detalle de Ingresos <span class="badge bg-success" id="totalIngresos"></span></h5>
+            <div class="table-scroll"><table class="table table-striped table-sm" id="tableIngresos"><thead><tr><th>Fecha</th><th>Total (Bs)</th></tr></thead><tbody></tbody></table></div>
+        </div>
+    </div>
+
+    <div id="cliente" class="report-section">
+        <div style="display:flex; gap:20px;">
+            <div style="flex:1;"><div class="chart-box"><h5>Top 10 Clientes</h5><canvas id="chartCliente"></canvas></div></div>
+            <div style="flex:1;"><div class="table-box"><h5>Detalle por Cliente</h5><div class="table-scroll"><table class="table table-striped table-sm" id="tableCliente"><thead><tr><th>Cliente</th><th>Envios</th><th>Ingresos (Bs)</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+    </div>
+
+    <div id="ruta" class="report-section">
+        <div class="chart-box"><h5>Grafico</h5><canvas id="chartRuta"></canvas></div>
+        <div class="table-box"><h5>Detalle por Ruta</h5><div class="table-scroll"><table class="table table-striped table-sm" id="tableRuta"><thead><tr><th>Ruta</th><th>Total Envios</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+
+    <div id="vehiculo" class="report-section">
+        <div style="display:flex; gap:20px;">
+            <div style="flex:1;"><div class="chart-box"><h5>Grafico</h5><canvas id="chartVehiculo"></canvas></div></div>
+            <div style="flex:1;"><div class="table-box"><h5>Detalle por Vehiculo</h5><div class="table-scroll"><table class="table table-striped table-sm" id="tableVehiculo"><thead><tr><th>Placa</th><th>Total Viajes</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let loaded = { estado: true, ingresos: false, cliente: false, ruta: false, vehiculo: false };
+
+window.addEventListener('load', () => loadReport('estado'));
+
+function showReport(id) {
+    document.querySelectorAll('.report-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.report-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector(`button[onclick="showReport('${id}')"]`).classList.add('active');
+    
+    if (!loaded[id]) {
+        loaded[id] = true;
+        setTimeout(() => loadReport(id), 50);
+    }
+}
+
+function loadReport(id) {
+    const endpoints = {
+        estado: '/reportes/envios_estado',
+        ingresos: '/reportes/ingresos_periodo',
+        cliente: '/reportes/envios_cliente',
+        ruta: '/reportes/envios_ruta',
+        vehiculo: '/reportes/utilizacion_vehiculos'
+    };
+    const charts = {
+        estado: 'doughnut',
+        ingresos: 'bar',
+        cliente: 'bar',
+        ruta: 'bar',
+        vehiculo: 'bar'
+    };
+    const opts = {
+        cliente: { indexAxis: 'y', scales: { x: { beginAtZero: true } } },
+        ruta: { indexAxis: 'y', scales: { x: { beginAtZero: true } } },
+        ingresos: { scales: { y: { beginAtZero: true } } },
+        vehiculo: { scales: { y: { beginAtZero: true } } }
+    };
+    const tableIds = { estado: 'tableEstado', ingresos: 'tableIngresos', cliente: 'tableCliente', ruta: 'tableRuta', vehiculo: 'tableVehiculo' };
+    const totalIds = { estado: 'totalEstado', ingresos: 'totalIngresos' };
+    
+    fetch(endpoints[id])
+        .then(r => r.json())
+        .then(data => {
+            if (data.values && data.values.length > 0) {
+                if (totalIds[id]) document.getElementById(totalIds[id]).textContent = 'Total: ' + data.values.reduce((a,b)=>a+b,0);
+                const ctx = document.getElementById('chart' + id.charAt(0).toUpperCase() + id.slice(1)).getContext('2d');
+                new Chart(ctx, {
+                    type: charts[id],
+                    data: { labels: data.labels, datasets: [{ label: 'Cantidad', data: data.values, backgroundColor: ['#3366cc','#dc3912','#ff9900','#109618','#990099','#0099c6','#dd4477','#66cc00','#ffcc00','#316395'], borderWidth:1 }] },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, ...(opts[id] || {}) }
+                });
+                const tbody = document.querySelector('#' + tableIds[id] + ' tbody');
+                data.detalles.slice(0,15).forEach(item => {
+                    const row = document.createElement('tr');
+                    Object.values(item).forEach(v => { const td = document.createElement('td'); td.textContent = (typeof v==='number'&&v.toFixed)?v.toFixed(2):v; row.appendChild(td); });
+                    tbody.appendChild(row);
+                });
+                if(data.detalles.length>15) { tbody.innerHTML += '<tr><td colspan="3" class="text-muted">... y '+(data.detalles.length-15)+' mas</td></tr>'; }
+            }
+        });
+}
+</script>
+{% endblock %}
