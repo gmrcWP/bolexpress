@@ -17,6 +17,23 @@ from .models import (
 )
 
 
+class WelcomeView(BaseView):
+    route_base = "/inicio"
+    default_view = "index"
+
+    @expose('/')
+    def index(self):
+        return self.render_template("welcome.html")
+
+
+appbuilder.add_view(
+    WelcomeView,
+    "Inicio",
+    icon="fa-home",
+    category=""
+)
+
+
 class ClienteView(ModelView):
     datamodel = SQLAInterface(Cliente)
 
