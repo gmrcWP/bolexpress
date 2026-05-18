@@ -1,7 +1,9 @@
-from flask_appbuilder import ModelView
+from flask import jsonify, render_template
+from flask_appbuilder import BaseView, ModelView, expose
 from flask_appbuilder.models.sqla.interface import SQLAInterface
+from sqlalchemy import func
 
-from .extensions import appbuilder
+from .extensions import appbuilder, db
 
 from .models import (
     Cliente,
@@ -149,5 +151,117 @@ appbuilder.add_view(
     EnvioView,
     "Envios",
     icon="fa-box",
+    category="Gestion"
+)
+
+
+class ReportesView(BaseView):
+    route_base = "/reportes"
+    default_view = "index"
+
+    @expose('/')
+    def index(self):
+        return self.render_template("reportes/index.html")
+
+    @expose('/envios_estado')
+    def envios_estado(self):
+        resultados = db.session.query(
+            Envio.estado,
+            func.count(Envio.id).label('total')
+        ).group_by(Envio.estado).all()
+
+        labels = [r[0] for r in resultados]
+        values = [r[1] for r in resultados]
+
+        data = db.session.query(Envio).all()
+        detalles = [
+            {"codigo": e.codigo, "estado": e.estado, "origen": e.origen, "destino": e.destino, "precio": float(e.precio)}
+            for e in data
+        ]
+
+        return jsonify({"labels": labels, "values": values, "detalles": detalles})
+
+    @expose('/ingresos_periodo')
+    def ingresos_periodo(self):
+        resultados = db.session.query(
+            func.date(Envio.fecha_registro).label('fecha'),
+            func.sum(Envio.precio).label('total')
+        ).filter(Envio.estado != 'Cancelado').group_by(
+            func.date(Envio.fecha_registro)
+        ).order_by(func.date(Envio.fecha_registro)).all()
+
+        labels = [str(r[0]) for r in resultados]
+        values = [float(r[1]) if r[1] else 0 for r in resultados]
+
+        detalles = [
+            {"fecha": str(r[0]), "total": float(r[1]) if r[1] else 0}
+            for r in resultados
+        ]
+
+        return jsonify({"labels": labels, "values": values, "detalles": detalles})
+
+    @expose('/envios_cliente')
+    def envios_cliente(self):
+        resultados = db.session.query(
+            Cliente.nombre,
+            func.count(Envio.id).label('total_envios'),
+            func.sum(Envio.precio).label('total_ingresos')
+        ).join(Envio).group_by(Cliente.id).order_by(
+            func.count(Envio.id).desc()
+        ).limit(10).all()
+
+        labels = [r[0] for r in resultados]
+        values = [r[1] for r in resultados]
+
+        detalles = [
+            {"cliente": r[0], "total_envios": r[1], "total_ingresos": float(r[2]) if r[2] else 0}
+            for r in resultados
+        ]
+
+        return jsonify({"labels": labels, "values": values, "detalles": detalles})
+
+    @expose('/envios_ruta')
+    def envios_ruta(self):
+        resultados = db.session.query(
+            func.concat(Envio.origen, ' -> ', Envio.destino).label('ruta'),
+            func.count(Envio.id).label('total')
+        ).group_by(Envio.origen, Envio.destino).order_by(
+            func.count(Envio.id).desc()
+        ).all()
+
+        labels = [r[0] for r in resultados]
+        values = [r[1] for r in resultados]
+
+        detalles = [
+            {"ruta": r[0], "total": r[1]}
+            for r in resultados
+        ]
+
+        return jsonify({"labels": labels, "values": values, "detalles": detalles})
+
+    @expose('/utilizacion_vehiculos')
+    def utilizacion_vehiculos(self):
+        resultados = db.session.query(
+            Vehiculo.placa,
+            func.count(RutaViaje.id).label('total_viajes')
+        ).outerjoin(RutaViaje).group_by(Vehiculo.id).order_by(
+            func.count(RutaViaje.id).desc()
+        ).all()
+
+        labels = [r[0] for r in resultados]
+        values = [r[1] for r in resultados]
+
+        detalles = [
+            {"placa": r[0], "total_viajes": r[1]}
+            for r in resultados
+        ]
+
+        return jsonify({"labels": labels, "values": values, "detalles": detalles})
+
+
+appbuilder.add_view(
+    ReportesView,
+    "Reportes",
+    icon="fa-chart-bar",
     category="Gestion"
 )

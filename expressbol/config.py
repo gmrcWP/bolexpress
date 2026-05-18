@@ -13,7 +13,7 @@ SECRET_KEY = "expressbol_123456789"
 
 # The SQLAlchemy connection string.
 # SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "app.db")
-SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:@127.0.0.1:3301/boliviaexpress"
+SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:@127.0.0.1:3306/boliviaexpress"
 # SQLALCHEMY_DATABASE_URI = 'postgresql://root:password@localhost/myapp'
 
 # Flask-WTF flag for CSRF
