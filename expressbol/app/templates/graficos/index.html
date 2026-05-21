@@ -68,6 +68,7 @@
     <div>
         <button class="grafico-btn active" onclick="showGrafico('heatmap')">Mapa de Calor de Rutas</button>
         <button class="grafico-btn" onclick="showGrafico('estado_mes')">Estado de Envios por Mes</button>
+        <button class="grafico-btn" onclick="showGrafico('proyeccion')">Proyeccion</button>
     </div>
 
     <div id="heatmap" class="grafico-section active">
@@ -118,12 +119,27 @@
             <canvas id="chartEstadoMes"></canvas>
         </div>
     </div>
+
+    <div id="proyeccion" class="grafico-section">
+        <div class="filtros-box">
+            <button onclick="loadProyeccion()" style="padding:8px 20px;background:#28a745;color:white;border:none;border-radius:3px;cursor:pointer;"><i class="fas fa-robot"></i> Generar Proyeccion con IA</button>
+        </div>
+        <div class="chart-box">
+            <h5>Historial y Proyeccion de Ingresos</h5>
+            <canvas id="chartProyeccion"></canvas>
+        </div>
+        <div class="chart-box" id="proyeccion_ia_box" style="display:none;">
+            <h5><i class="fas fa-robot"></i> Analisis IA de Proyeccion</h5>
+            <div id="proyeccion_ia" style="padding:10px;"></div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let heatmapChart = null;
 let estadoMesChart = null;
+let proyeccionChart = null;
 
 function showGrafico(id) {
     document.querySelectorAll('.grafico-section').forEach(s => s.classList.remove('active'));
@@ -133,6 +149,7 @@ function showGrafico(id) {
     
     if (id === 'heatmap') loadHeatmap();
     if (id === 'estado_mes') loadEstadoMes();
+    if (id === 'proyeccion') {}
 }
 
 function initFiltros() {
@@ -258,6 +275,79 @@ function loadEstadoMes() {
                     }
                 }
             });
+        });
+}
+
+function loadProyeccion() {
+    document.getElementById('proyeccion_ia_box').style.display = 'block';
+    document.getElementById('proyeccion_ia').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generando proyeccion con IA...</p>';
+
+    fetch('/graficos/proyeccion')
+        .then(r => r.json())
+        .then(data => {
+            const labels = [];
+            const reales = [];
+            const proyectados = [];
+
+            data.historicos.forEach(h => {
+                labels.push(h.mes);
+                reales.push(h.valor);
+                proyectados.push(null);
+            });
+
+            const totalMeses = labels.length;
+            data.proyeccion.forEach((p, i) => {
+                labels.push(p.mes);
+                reales.push(null);
+                proyectados.push(p.valor);
+            });
+
+            const ctx = document.getElementById('chartProyeccion').getContext('2d');
+            if (proyeccionChart) proyeccionChart.destroy();
+
+            proyeccionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Ingresos Reales',
+                            data: reales,
+                            borderColor: '#3366cc',
+                            backgroundColor: 'rgba(51,102,204,0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            spanGaps: false
+                        },
+                        {
+                            label: 'Proyeccion IA',
+                            data: proyectados,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40,167,69,0.1)',
+                            borderDash: [5, 5],
+                            fill: true,
+                            tension: 0.3,
+                            spanGaps: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            if (data.analisis) {
+                document.getElementById('proyeccion_ia').innerHTML = data.analisis;
+            }
+        })
+        .catch(err => {
+            document.getElementById('proyeccion_ia').innerHTML = '<p class="text-danger">Error al conectar con IA</p>';
         });
 }
 
