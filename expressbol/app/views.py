@@ -6,7 +6,7 @@ from sqlalchemy import extract
 from wtforms import SelectField
 from flask_appbuilder.fieldwidgets import Select2Widget
 from wtforms.validators import ValidationError
-from .servicios.servicio_ia import analizar_ingresos, analizar_rutas
+from .servicios.servicio_ia import analizar_ingresos, analizar_rutas, analizar_proyeccion
 
 from .extensions import appbuilder, db
 
@@ -467,6 +467,37 @@ class GraficosView(BaseView):
                 {"label": "Entregado", "data": [mes_data[m].get("Entregado", 0) for m in meses], "backgroundColor": "#109618"},
                 {"label": "Cancelado", "data": [mes_data[m].get("Cancelado", 0) for m in meses], "backgroundColor": "#dc3912"}
             ]
+        })
+
+    @expose('/proyeccion')
+    def proyeccion(self):
+        from datetime import datetime
+
+        resultados = db.session.query(
+            func.date_format(Envio.fecha_registro, '%Y-%m').label('mes'),
+            func.sum(Envio.precio).label('total')
+        ).filter(
+            Envio.estado != 'Cancelado',
+            Envio.fecha_registro.isnot(None)
+        ).group_by(
+            func.date_format(Envio.fecha_registro, '%Y-%m')
+        ).order_by(
+            func.date_format(Envio.fecha_registro, '%Y-%m')
+        ).all()
+
+        meses_nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        historicos = []
+        for r in resultados:
+            fecha = datetime.strptime(r[0], '%Y-%m')
+            label = f"{meses_nombres[fecha.month-1]} {fecha.year}"
+            historicos.append({"mes": label, "valor": float(r[1]) if r[1] else 0, "fecha": r[0]})
+
+        ia_result = analizar_proyeccion(historicos)
+
+        return jsonify({
+            "historicos": historicos,
+            "proyeccion": ia_result.get("proyeccion", []),
+            "analisis": ia_result.get("analisis", "<p>Error al generar proyección</p>")
         })
 
     @expose('/estados')
