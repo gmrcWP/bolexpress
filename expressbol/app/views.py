@@ -6,6 +6,7 @@ from sqlalchemy import extract
 from wtforms import SelectField
 from flask_appbuilder.fieldwidgets import Select2Widget
 from wtforms.validators import ValidationError
+from .servicios.servicio_ia import analizar_ingresos
 
 from .extensions import appbuilder, db
 
@@ -306,7 +307,7 @@ class ReportesView(BaseView):
             func.sum(Envio.precio).label('total')
         ).filter(Envio.estado != 'Cancelado').group_by(
             func.date(Envio.fecha_registro)
-        ).order_by(func.date(Envio.fecha_registro)).all()
+        ).order_by(func.sum(Envio.precio).desc()).all()
 
         labels = [str(r[0]) for r in resultados]
         values = [float(r[1]) if r[1] else 0 for r in resultados]
@@ -316,7 +317,14 @@ class ReportesView(BaseView):
             for r in resultados
         ]
 
-        return jsonify({"labels": labels, "values": values, "detalles": detalles})
+        analisis = analizar_ingresos(detalles)
+
+        return jsonify({
+            "labels": labels,
+            "values": values,
+            "detalles": detalles,
+            "analisis": analisis
+        })
 
     @expose('/envios_cliente')
     def envios_cliente(self):
