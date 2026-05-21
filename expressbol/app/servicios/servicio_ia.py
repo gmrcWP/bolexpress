@@ -28,7 +28,6 @@ def analizar_ingresos(data):
     <h4>, <p>, <ul>, <li>, <strong>
 
     Genera:
-    - tendencias
     - observaciones importantes
     - mejores fechas
     - recomendaciones
