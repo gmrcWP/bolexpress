@@ -6,7 +6,7 @@ from sqlalchemy import extract
 from wtforms import SelectField
 from flask_appbuilder.fieldwidgets import Select2Widget
 from wtforms.validators import ValidationError
-from .servicios.servicio_ia import analizar_ingresos
+from .servicios.servicio_ia import analizar_ingresos, analizar_rutas
 
 from .extensions import appbuilder, db
 
@@ -425,7 +425,15 @@ class GraficosView(BaseView):
                 row.append(count)
             heatmap_data.append(row)
 
-        return jsonify({"dias": dias, "rutas": rutas, "data": heatmap_data})
+        datos_analisis = {
+            "dias": dias,
+            "rutas": rutas,
+            "heatmap": heatmap_data,
+            "total_envios": len(envios)
+        }
+        analisis = analizar_rutas(datos_analisis)
+
+        return jsonify({"dias": dias, "rutas": rutas, "data": heatmap_data, "analisis": analisis})
 
     @expose('/estado_mes')
     def estado_mes(self):
