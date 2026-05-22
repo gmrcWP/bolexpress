@@ -1,97 +1,180 @@
 {% extends "appbuilder/base.html" %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    .grafico-container { padding: 20px; }
-    .grafico-btn {
-        padding: 8px 16px;
-        margin-right: 5px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        background: #f8f8f8;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-    .grafico-btn.active { background: #337ab7; color: white; border-color: #337ab7; }
-    .grafico-section { display: none; padding: 20px 0; }
-    .grafico-section.active { display: block; }
-    .filtros-box {
-        padding: 15px;
-        background: #f5f5f5;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .filtros-box label { font-weight: bold; margin-right: 5px; }
-    .filtros-box input, .filtros-box select {
-        padding: 5px 10px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
-    .chart-box {
-        padding: 20px;
-        background: #fafafa;
-        border-radius: 4px;
-        margin-bottom: 20px;
-    }
-    canvas { max-height: 350px; }
-    .heatmap-container {
-        overflow-x: auto;
-        padding: 10px;
-    }
-    .heatmap-table {
-        border-collapse: collapse;
-        font-size: 12px;
-    }
-    .heatmap-table th, .heatmap-table td {
-        padding: 8px;
-        text-align: center;
-        border: 1px solid #ddd;
-    }
-    .heatmap-table th { background: #f0f0f0; font-weight: bold; }
-    .heatmap-cell {
-        min-width: 80px;
-        transition: all 0.3s;
-    }
-    .heatmap-cell:hover { transform: scale(1.1); }
+* { font-family: 'Inter', system-ui, sans-serif; }
+.grafico-container { padding: 24px; }
+.page-title { font-size: 28px; font-weight: 700; color: #1e3a5f; margin-bottom: 4px; }
+.page-sub { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+
+.grafico-tabs {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px;
+}
+.grafico-btn {
+    padding: 10px 20px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    cursor: pointer;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; gap: 8px;
+}
+.grafico-btn:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background: #f8faff;
+    transform: translateY(-1px);
+}
+.grafico-btn.active {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    color: white;
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+}
+
+.grafico-section { display: none; }
+.grafico-section.active { display: block; }
+
+.modern-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+    border: 1px solid #f1f5f9;
+}
+.modern-card h5 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e3a5f;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modern-card canvas { max-height: 300px; }
+.ia-card { border-left: 4px solid #2563eb; background: linear-gradient(135deg, #f8faff, #f1f5f9); }
+
+.filtros-box {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.02);
+    border: 1px solid #f1f5f9;
+}
+.filtros-box label { font-weight: 600; color: #475569; font-size: 13px; margin-right: 6px; }
+.filtros-box input, .filtros-box select {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+}
+.filtros-box input:focus, .filtros-box select:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.btn-primary-modern {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary-modern:hover {
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    transform: translateY(-1px);
+}
+
+.btn-ia {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-ia:hover {
+    box-shadow: 0 4px 12px rgba(5,150,105,0.3);
+    transform: translateY(-1px);
+}
+
+.heatmap-table {
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.heatmap-table th, .heatmap-table td {
+    padding: 10px 14px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+.heatmap-table th { background: #f1f5f9; font-weight: 600; color: #475569; }
+.heatmap-cell {
+    min-width: 80px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.heatmap-cell:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.heatmap-container { overflow-x: auto; }
+
+#heatmap_leyenda {
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #475569;
+    display: inline-flex; gap: 16px;
+}
 </style>
 
 <div class="grafico-container">
-    <h3>Graficos Dinamicos</h3>
-    <hr>
-    
-    <div>
-        <button class="grafico-btn active" onclick="showGrafico('heatmap')">Mapa de Calor de Rutas</button>
-        <button class="grafico-btn" onclick="showGrafico('estado_mes')">Estado de Envios por Mes</button>
-        <button class="grafico-btn" onclick="showGrafico('proyeccion')">Proyeccion</button>
+    <h1 class="page-title">Gráficos Dinámicos</h1>
+    <p class="page-sub">Visualización interactiva y análisis con inteligencia artificial</p>
+
+    <div class="grafico-tabs">
+        <button class="grafico-btn active" onclick="showGrafico('heatmap')"><i class="fas fa-fire"></i> Mapa de Calor de Rutas</button>
+        <button class="grafico-btn" onclick="showGrafico('estado_mes')"><i class="fas fa-chart-bar"></i> Estado de Envíos por Mes</button>
+        <button class="grafico-btn" onclick="showGrafico('proyeccion')"><i class="fas fa-chart-line"></i> Proyección</button>
     </div>
 
     <div id="heatmap" class="grafico-section active">
         <div class="filtros-box">
-            <div>
-                <label>Desde:</label>
-                <input type="date" id="heatmap_from">
-            </div>
-            <div>
-                <label>Hasta:</label>
-                <input type="date" id="heatmap_to">
-            </div>
-            <div>
-                <label>Estado:</label>
-                <select id="heatmap_estado">
-                    <option value="todos">Todos</option>
-                </select>
-            </div>
-            <button onclick="loadHeatmap()" style="padding:5px 15px;background:#337ab7;color:white;border:none;border-radius:3px;cursor:pointer;">Aplicar</button>
-            <button onclick="loadHeatmapIA()" style="padding:5px 15px;background:#28a745;color:white;border:none;border-radius:3px;cursor:pointer;"><i class="fas fa-robot"></i> Analizar con IA</button>
+            <div><label>Desde:</label><input type="date" id="heatmap_from"></div>
+            <div><label>Hasta:</label><input type="date" id="heatmap_to"></div>
+            <div><label>Estado:</label><select id="heatmap_estado"><option value="todos">Todos</option></select></div>
+            <button class="btn-primary-modern" onclick="loadHeatmap()"><i class="fas fa-search"></i> Aplicar</button>
+            <button class="btn-ia" onclick="loadHeatmapIA()"><i class="fas fa-robot"></i> Analizar con IA</button>
         </div>
-        <div class="chart-box">
-            <h5>Mapa de Calor - Frecuencia de Rutas por Dia</h5>
+        <div class="modern-card">
+            <h5><i class="fas fa-fire" style="color:#f59e0b;"></i> Mapa de Calor — Frecuencia de Rutas por Día</h5>
             <div class="heatmap-container">
                 <table class="heatmap-table" id="heatmap_table">
                     <thead></thead>
@@ -99,261 +182,121 @@
                 </table>
             </div>
         </div>
-        <div class="chart-box" id="heatmap_ia_box" style="display:none;">
-            <h5><i class="fas fa-robot"></i> Analisis IA</h5>
-            <div id="heatmap_ia" style="padding:10px;"></div>
+        <div id="heatmap_leyenda"></div>
+        <div class="modern-card ia-card" id="heatmap_ia_box" style="display:none;">
+            <h5><i class="fas fa-robot" style="color:#2563eb;"></i> Análisis IA</h5>
+            <div id="heatmap_ia" style="line-height:1.7; font-size:14px; color:#334155;"></div>
         </div>
-        <div id="heatmap_leyenda" style="margin-top:10px;font-size:12px;color:#666;"></div>
     </div>
 
     <div id="estado_mes" class="grafico-section">
         <div class="filtros-box">
-            <div>
-                <label>Año:</label>
-                <select id="estado_year" onchange="loadEstadoMes()">
-                </select>
-            </div>
+            <div><label>Año:</label><select id="estado_year" onchange="loadEstadoMes()"></select></div>
         </div>
-        <div class="chart-box">
-            <h5>Estado de Envios por Mes</h5>
+        <div class="modern-card">
+            <h5><i class="fas fa-chart-bar" style="color:#8b5cf6;"></i> Estado de Envíos por Mes</h5>
             <canvas id="chartEstadoMes"></canvas>
         </div>
     </div>
 
     <div id="proyeccion" class="grafico-section">
         <div class="filtros-box">
-            <button onclick="loadProyeccion()" style="padding:8px 20px;background:#28a745;color:white;border:none;border-radius:3px;cursor:pointer;"><i class="fas fa-robot"></i> Generar Proyeccion con IA</button>
+            <button class="btn-ia" onclick="loadProyeccion()"><i class="fas fa-rocket"></i> Generar Proyección con IA</button>
         </div>
-        <div class="chart-box">
-            <h5>Historial y Proyeccion de Ingresos</h5>
+        <div class="modern-card">
+            <h5><i class="fas fa-chart-line" style="color:#059669;"></i> Historial y Proyección de Ingresos</h5>
             <canvas id="chartProyeccion"></canvas>
         </div>
-        <div class="chart-box" id="proyeccion_ia_box" style="display:none;">
-            <h5><i class="fas fa-robot"></i> Analisis IA de Proyeccion</h5>
-            <div id="proyeccion_ia" style="padding:10px;"></div>
+        <div class="modern-card ia-card" id="proyeccion_ia_box" style="display:none;">
+            <h5><i class="fas fa-robot" style="color:#2563eb;"></i> Análisis IA de Proyección</h5>
+            <div id="proyeccion_ia" style="line-height:1.7; font-size:14px; color:#334155;"></div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let heatmapChart = null;
-let estadoMesChart = null;
-let proyeccionChart = null;
+let heatmapChart = null, estadoMesChart = null, proyeccionChart = null;
 
 function showGrafico(id) {
     document.querySelectorAll('.grafico-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.grafico-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.querySelector(`button[onclick="showGrafico('${id}')"]`).classList.add('active');
-    
     if (id === 'heatmap') loadHeatmap();
     if (id === 'estado_mes') loadEstadoMes();
-    if (id === 'proyeccion') {}
 }
 
 function initFiltros() {
-    fetch('/graficos/estados')
-        .then(r => r.json())
-        .then(estados => {
-            const sel = document.getElementById('heatmap_estado');
-            estados.forEach(e => {
-                const opt = document.createElement('option');
-                opt.value = e;
-                opt.textContent = e;
-                sel.appendChild(opt);
-            });
-        });
-    
-    fetch('/graficos/years')
-        .then(r => r.json())
-        .then(years => {
-            const sel = document.getElementById('estado_year');
-            years.forEach(y => {
-                const opt = document.createElement('option');
-                opt.value = y;
-                opt.textContent = y;
-                sel.appendChild(opt);
-            });
-        });
+    fetch('/graficos/estados').then(r => r.json()).then(estados => {
+        const sel = document.getElementById('heatmap_estado');
+        estados.forEach(e => { const o = document.createElement('option'); o.value = e; o.textContent = e; sel.appendChild(o); });
+    });
+    fetch('/graficos/years').then(r => r.json()).then(years => {
+        const sel = document.getElementById('estado_year');
+        years.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; sel.appendChild(o); });
+    });
 }
 
-function getColor(value, max) {
-    const intensity = Math.min(value / max, 1);
-    if (intensity === 0) return '#f0f0f0';
-    return `rgba(51, 102, 204, ${0.2 + intensity * 0.8})`;
-}
+function getColor(v, m) { const i = Math.min(v / m, 1); return i === 0 ? '#f1f5f9' : `rgba(37, 99, 235, ${0.15 + i * 0.85})`; }
 
 function loadHeatmap() {
-    const from = document.getElementById('heatmap_from').value;
-    const to = document.getElementById('heatmap_to').value;
-    const estado = document.getElementById('heatmap_estado').value;
-    
-    let url = '/graficos/heatmap_rutas?';
-    if (from) url += 'from_date=' + from + '&';
-    if (to) url += 'to_date=' + to + '&';
-    if (estado) url += 'estado=' + estado;
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            const table = document.getElementById('heatmap_table');
-            const thead = table.querySelector('thead');
-            const tbody = table.querySelector('tbody');
-            
-            thead.innerHTML = '<tr><th>Dia</th>' + data.rutas.map(r => '<th>' + r + '</th>').join('') + '</tr>';
-            
-            const maxVal = Math.max(...data.data.flat());
-            tbody.innerHTML = '';
-            
-            data.dias.forEach((dia, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = '<td><strong>' + dia + '</strong></td>' + 
-                    data.data[i].map(v => `<td class="heatmap-cell" style="background:${getColor(v, maxVal)}" title="${v}">${v}</td>`).join('');
-                tbody.appendChild(tr);
-            });
-            
-            document.getElementById('heatmap_leyenda').innerHTML = `Total rutas: ${data.rutas.length} | Max envios: ${maxVal}`;
-            
-            if (data.analisis) {
-                document.getElementById('heatmap_ia_box').style.display = 'block';
-                document.getElementById('heatmap_ia').innerHTML = data.analisis;
-            }
+    const p = new URLSearchParams({ from_date: document.getElementById('heatmap_from').value, to_date: document.getElementById('heatmap_to').value, estado: document.getElementById('heatmap_estado').value });
+    fetch('/graficos/heatmap_rutas?' + p).then(r => r.json()).then(d => {
+        const t = document.getElementById('heatmap_table'), th = t.querySelector('thead'), tb = t.querySelector('tbody');
+        th.innerHTML = '<tr><th>Día</th>' + d.rutas.map(r => '<th>' + r + '</th>').join('') + '</tr>';
+        const max = Math.max(...d.data.flat()); tb.innerHTML = '';
+        d.dias.forEach((dia, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td><strong>' + dia + '</strong></td>' + d.data[i].map(v => `<td class="heatmap-cell" style="background:${getColor(v, max)}" title="${v}">${v}</td>`).join('');
+            tb.appendChild(tr);
         });
+        document.getElementById('heatmap_leyenda').innerHTML = `<span>📬 Total rutas: ${d.rutas.length}</span><span>📊 Máx envíos: ${max}</span>`;
+        if (d.analisis) { document.getElementById('heatmap_ia_box').style.display = 'block'; document.getElementById('heatmap_ia').innerHTML = d.analisis; }
+    });
 }
 
 function loadHeatmapIA() {
-    const from = document.getElementById('heatmap_from').value;
-    const to = document.getElementById('heatmap_to').value;
-    const estado = document.getElementById('heatmap_estado').value;
-    
     document.getElementById('heatmap_ia_box').style.display = 'block';
-    document.getElementById('heatmap_ia').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generando analisis con IA...</p>';
-    
-    let url = '/graficos/heatmap_rutas?';
-    if (from) url += 'from_date=' + from + '&';
-    if (to) url += 'to_date=' + to + '&';
-    if (estado) url += 'estado=' + estado;
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (data.analisis) {
-                document.getElementById('heatmap_ia').innerHTML = data.analisis;
-            } else {
-                document.getElementById('heatmap_ia').innerHTML = '<p class="text-muted">No se pudo generar el analisis</p>';
-            }
-        })
-        .catch(err => {
-            document.getElementById('heatmap_ia').innerHTML = '<p class="text-danger">Error al conectar con IA</p>';
-        });
+    document.getElementById('heatmap_ia').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generando análisis con IA...</p>';
+    const p = new URLSearchParams({ from_date: document.getElementById('heatmap_from').value, to_date: document.getElementById('heatmap_to').value, estado: document.getElementById('heatmap_estado').value });
+    fetch('/graficos/heatmap_rutas?' + p).then(r => r.json()).then(d => {
+        document.getElementById('heatmap_ia').innerHTML = d.analisis || '<p class="text-muted">No se pudo generar el análisis</p>';
+    }).catch(() => document.getElementById('heatmap_ia').innerHTML = '<p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error al conectar con IA</p>');
 }
 
 function loadEstadoMes() {
-    const year = document.getElementById('estado_year').value;
-    
-    fetch('/graficos/estado_mes?year=' + year)
-        .then(r => r.json())
-        .then(data => {
-            const ctx = document.getElementById('chartEstadoMes').getContext('2d');
-            if (estadoMesChart) estadoMesChart.destroy();
-            
-            estadoMesChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: data.datasets
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true }
-                    },
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        });
+    fetch('/graficos/estado_mes?year=' + document.getElementById('estado_year').value).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartEstadoMes').getContext('2d');
+        if (estadoMesChart) estadoMesChart.destroy();
+        estadoMesChart = new Chart(ctx, { type: 'bar', data: { labels: d.labels, datasets: d.datasets }, options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } } });
+    });
 }
 
 function loadProyeccion() {
     document.getElementById('proyeccion_ia_box').style.display = 'block';
-    document.getElementById('proyeccion_ia').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generando proyeccion con IA...</p>';
-
-    fetch('/graficos/proyeccion')
-        .then(r => r.json())
-        .then(data => {
-            const labels = [];
-            const reales = [];
-            const proyectados = [];
-
-            data.historicos.forEach(h => {
-                labels.push(h.mes);
-                reales.push(h.valor);
-                proyectados.push(null);
-            });
-
-            const totalMeses = labels.length;
-            data.proyeccion.forEach((p, i) => {
-                labels.push(p.mes);
-                reales.push(null);
-                proyectados.push(p.valor);
-            });
-
-            const ctx = document.getElementById('chartProyeccion').getContext('2d');
-            if (proyeccionChart) proyeccionChart.destroy();
-
-            proyeccionChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Ingresos Reales',
-                            data: reales,
-                            borderColor: '#3366cc',
-                            backgroundColor: 'rgba(51,102,204,0.1)',
-                            fill: true,
-                            tension: 0.3,
-                            spanGaps: false
-                        },
-                        {
-                            label: 'Proyeccion IA',
-                            data: proyectados,
-                            borderColor: '#28a745',
-                            backgroundColor: 'rgba(40,167,69,0.1)',
-                            borderDash: [5, 5],
-                            fill: true,
-                            tension: 0.3,
-                            spanGaps: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-
-            if (data.analisis) {
-                document.getElementById('proyeccion_ia').innerHTML = data.analisis;
-            }
-        })
-        .catch(err => {
-            document.getElementById('proyeccion_ia').innerHTML = '<p class="text-danger">Error al conectar con IA</p>';
+    document.getElementById('proyeccion_ia').innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Generando proyección con IA...</p>';
+    fetch('/graficos/proyeccion').then(r => r.json()).then(d => {
+        const labels = [], reales = [], proyectados = [];
+        d.historicos.forEach(h => { labels.push(h.mes); reales.push(h.valor); proyectados.push(null); });
+        d.proyeccion.forEach(p => { labels.push(p.mes); reales.push(null); proyectados.push(p.valor); });
+        const ctx = document.getElementById('chartProyeccion').getContext('2d');
+        if (proyeccionChart) proyeccionChart.destroy();
+        proyeccionChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Ingresos Reales', data: reales, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: true, tension: 0.3, spanGaps: false },
+                    { label: 'Proyección', data: proyectados, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.08)', borderDash: [6, 4], fill: true, tension: 0.3, spanGaps: false }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
         });
+        if (d.analisis) document.getElementById('proyeccion_ia').innerHTML = d.analisis;
+    }).catch(() => document.getElementById('proyeccion_ia').innerHTML = '<p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error al conectar con IA</p>');
 }
 
-window.addEventListener('load', () => {
-    initFiltros();
-    loadHeatmap();
-});
+window.addEventListener('load', () => { initFiltros(); loadHeatmap(); });
 </script>
 {% endblock %}
