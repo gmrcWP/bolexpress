@@ -1,7 +1,71 @@
 {% extends "appbuilder/base.html" %}
 
 {% block content %}
-<h2 style="text-align: center;">{{_('Page not found')}}</h2>
+<style>
+* { font-family: 'Inter', system-ui, sans-serif; }
+.error-container {
+    max-width: 500px;
+    margin: 60px auto;
+    text-align: center;
+    padding: 48px 32px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+    border: 1px solid #f1f5f9;
+}
+.error-code {
+    font-size: 72px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+.error-icon {
+    font-size: 48px;
+    color: #ef4444;
+    margin-bottom: 16px;
+}
+.error-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+.error-text {
+    color: #64748b;
+    margin-bottom: 24px;
+    font-size: 15px;
+}
+.error-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+.error-btn:hover {
+    box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+</style>
+<div class="error-container">
+    <div class="error-icon">🔍</div>
+    <div class="error-code">404</div>
+    <div class="error-title">Página no encontrada</div>
+    <div class="error-text">La página que buscas no existe o ha sido movida.</div>
+    <a href="/" class="error-btn"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+</div>
 {% endblock %}
 
 
